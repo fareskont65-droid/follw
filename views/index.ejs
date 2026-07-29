@@ -3,57 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>لوحة SMM الديناميكية المتقدمة</title>
+    <title>لوحة إدارة شبكة الحسابات الآلية</title>
     <style>
         body { font-family: Tahoma, sans-serif; background: #0f172a; color: #f8fafc; margin: 0; padding: 20px; }
         h1, h2 { text-align: center; color: #38bdf8; }
         .container { max-width: 1000px; margin: 0 auto; background: #1e293b; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
         .form-box { background: #334155; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
-        input { padding: 10px; border-radius: 5px; border: 1px solid #475569; background: #1e293b; color: #fff; flex: 1; min-width: 200px; }
+        input { padding: 10px; border-radius: 5px; border: 1px solid #475569; background: #1e293b; color: #fff; flex: 1; min-width: 250px; }
         button { background: #0284c7; color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; transition: 0.2s; font-weight: bold; }
         button:hover { background: #0369a1; }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
         th, td { padding: 12px; text-align: center; border-bottom: 1px solid #334155; word-break: break-all; }
         th { background: #334155; color: #38bdf8; }
-        .status { font-weight: bold; color: #4ade80; }
-        .queue-info { text-align: center; color: #fbbf24; margin-bottom: 10px; font-weight: bold; }
+        .target-box { background: #0284c720; border: 1px solid #38bdf8; padding: 10px; border-radius: 8px; text-align: center; margin-bottom: 20px; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>لوحة تحكم الأتمتة الديناميكية (SMM PoC)</h1>
+        <h1>إدارة شبكة الحسابات الآلية (Bot Farm Engine)</h1>
         
-        <!-- نموذج إضافة رابط جديد -->
-        <div class="form-box">
-            <input type="text" id="targetName" placeholder="اسم صاحب الحساب أو المنصة">
-            <input type="text" id="targetUrl" placeholder="ألصق رابط الحساب هنا (Profile URL)">
-            <button onclick="addTarget()">إضافة الرابط للنظام ➕</button>
+        <div class="target-box">
+            الرابط المستهدف الحالي لزيادة المتابعين: <br>
+            <a href="<%= targetUrl %>" target="_blank" style="color: #38bdf8; font-weight: bold;"><%= targetUrl %></a>
         </div>
 
-        <div class="queue-info">حالة الطابور الحالي: <span><%= queueLength %></span> طلبات قيد الانتظار</div>
+        <!-- إضافة حساب جديد مع الـ Cookie -->
+        <div class="form-box">
+            <input type="text" id="username" placeholder="اسم حساب فيسبوك (أو معرفه)">
+            <input type="text" id="cookie" placeholder="الصق Cookie الخاصة بالحساب هنا">
+            <button onclick="addAccount()">إضافة الحساب للشبكة ➕</button>
+        </div>
 
+        <div style="text-align: center; margin-bottom: 20px;">
+            <button onclick="startCampaign()" style="background: #10b981; font-size: 16px; padding: 12px 25px;">بدء حملة إرسال المتابعين للرابط 🚀</button>
+        </div>
+
+        <h2>قائمة الحسابات المخزنة في الشبكة (<%= accounts.length %>)</h2>
         <table>
             <thead>
                 <tr>
                     <th>#ID</th>
-                    <th>الاسم / الحساب</th>
-                    <th>الرابط المستهدف</th>
-                    <th>المتابعين</th>
+                    <th>اسم الحساب</th>
                     <th>الحالة</th>
-                    <th>الإجراء</th>
                 </tr>
             </thead>
             <tbody>
-                <% pages.forEach(page => { %>
+                <% accounts.forEach(acc => { %>
                     <tr>
-                        <td><%= page.id %></td>
-                        <td><%= page.name %></td>
-                        <td><a href="<%= page.url %>" target="_blank" style="color: #38bdf8;"><%= page.url %></a></td>
-                        <td><%= page.followers %></td>
-                        <td class="status"><%= page.status %></td>
-                        <td>
-                            <button onclick="boostTarget(<%= page.id %>)">إرسال 500 متابع 🚀</button>
-                        </td>
+                        <td><%= acc.id %></td>
+                        <td><%= acc.username %></td>
+                        <td style="color: #4ade80;"><%= acc.status %></td>
                     </tr>
                 <% }) %>
             </tbody>
@@ -61,38 +60,34 @@
     </div>
 
     <script>
-        async function addTarget() {
-            const targetName = document.getElementById('targetName').value;
-            const targetUrl = document.getElementById('targetUrl').value;
+        async function addAccount() {
+            const username = document.getElementById('username').value;
+            const cookie = document.getElementById('cookie').value;
             
-            if(!targetUrl) {
-                alert('الرجاء إدخال الرابط على الأقل!');
+            if(!username || !cookie) {
+                alert('الرجاء إدخال اسم المستخدم والـ Cookie معاً!');
                 return;
             }
 
-            let response = await fetch('/add-target', {
+            let response = await fetch('/add-account', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ targetName, targetUrl })
+                body: JSON.stringify({ username, cookie })
             });
             let result = await response.json();
-            if(result.success) {
-                location.reload();
-            }
+            alert(result.message);
+            if(result.success) location.reload();
         }
 
-        async function boostTarget(pageId) {
-            let response = await fetch('/boost', {
+        async function startCampaign() {
+            let response = await fetch('/start-campaign', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ pageId, amount: 500 })
+                body: JSON.stringify({ amount: 100 })
             });
             let result = await response.json();
-            if(result.success) {
-                setTimeout(() => {
-                    location.reload();
-                }, 1500);
-            }
+            alert(result.message);
+            location.reload();
         }
     </script>
 </body>
