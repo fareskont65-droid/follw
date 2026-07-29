@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>إدارة شبكة الحسابات الآلية (Bulk Import)</title>
+    <title>إدارة الصفحات الفرعية الآلية (Page Farm)</title>
     <style>
         body { font-family: Tahoma, sans-serif; background: #0f172a; color: #f8fafc; margin: 0; padding: 20px; }
         h1, h2 { text-align: center; color: #38bdf8; }
         .container { max-width: 1000px; margin: 0 auto; background: #1e293b; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
         .form-box { background: #334155; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: flex; flex-direction: column; gap: 10px; }
-        textarea { padding: 10px; border-radius: 5px; border: 1px solid #475569; background: #1e293b; color: #fff; width: 100%; height: 120px; resize: vertical; }
+        textarea { padding: 10px; border-radius: 5px; border: 1px solid #475569; background: #1e293b; color: #fff; width: 100%; height: 100px; resize: vertical; }
         button { background: #0284c7; color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; transition: 0.2s; font-weight: bold; }
         button:hover { background: #0369a1; }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
@@ -20,39 +20,39 @@
 </head>
 <body>
     <div class="container">
-        <h1>إدارة شبكة الحسابات الجماعية (Bot Farm Engine)</h1>
+        <h1>إدارة الصفحات الفرعية الآلية (10 صفحات اختبارية)</h1>
         
         <div class="target-box">
-            الرابط المستهدف الحالي لزيادة المتابعين: <br>
+            الرابط المستهدف الحالي: <br>
             <a href="<%= targetUrl %>" target="_blank" style="color: #38bdf8; font-weight: bold;"><%= targetUrl %></a>
         </div>
 
-        <!-- صندوق الاستيراد الجماعي -->
+        <!-- صندوق استيراد الـ 10 صفحات -->
         <div class="form-box">
-            <label style="color: #38bdf8; font-weight: bold;">الاستيراد الجماعي للحسابات (الصيغة: اسم_المستخدم:الكوكيز - كل حساب في سطر):</label>
-            <textarea id="bulkData" placeholder="user1:c_user=...;xs=...&#10;user2:c_user=...;xs=..."></textarea>
-            <button onclick="importBulkAccounts()">استيراد وحفظ الحسابات دفعة واحدة 📥</button>
+            <label style="color: #38bdf8; font-weight: bold;">أدخل الـ 10 صفحات (الصيغة: اسم_الصفحة:Page_Token - كل صفحة في سطر):</label>
+            <textarea id="pagesData" placeholder="Page1:EAAG...&#10;Page2:EAAG..."></textarea>
+            <button onclick="importPages()">حفظ الـ 10 صفحات في السيرفر 📥</button>
         </div>
 
         <div style="text-align: center; margin-bottom: 20px;">
-            <button onclick="startCampaign()" style="background: #10b981; font-size: 16px; padding: 12px 25px;">بدء حملة إرسال المتابعين للرابط 🚀</button>
+            <button onclick="startPageCampaign()" style="background: #10b981; font-size: 16px; padding: 12px 25px;">بدء اختبار التفاعل عبر الـ 10 صفحات 🚀</button>
         </div>
 
-        <h2>الحسابات المخزنة في الشبكة حالياً (<%= accounts.length %>)</h2>
+        <h2>الصفحات الفرعية المسجلة حالياً (<%= pages.length %> / 10)</h2>
         <table>
             <thead>
                 <tr>
                     <th>#ID</th>
-                    <th>اسم الحساب</th>
+                    <th>اسم الصفحة</th>
                     <th>الحالة</th>
                 </tr>
             </thead>
             <tbody>
-                <% accounts.forEach(acc => { %>
+                <% pages.forEach(pg => { %>
                     <tr>
-                        <td><%= acc.id %></td>
-                        <td><%= acc.username %></td>
-                        <td style="color: #4ade80;"><%= acc.status %></td>
+                        <td><%= pg.id %></td>
+                        <td><%= pg.pageName %></td>
+                        <td style="color: #4ade80;"><%= pg.status %></td>
                     </tr>
                 <% }) %>
             </tbody>
@@ -60,25 +60,25 @@
     </div>
 
     <script>
-        async function importBulkAccounts() {
-            const bulkData = document.getElementById('bulkData').value;
-            if(!bulkData) {
-                alert('الرجاء لصق قائمة الحسابات أولاً!');
+        async function importPages() {
+            const pagesData = document.getElementById('pagesData').value;
+            if(!pagesData) {
+                alert('الرجاء إدخال بيانات الصفحات أولاً!');
                 return;
             }
 
-            let response = await fetch('/import-bulk', {
+            let response = await fetch('/import-pages', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ bulkData })
+                body: JSON.stringify({ pagesData })
             });
             let result = await response.json();
             alert(result.message);
             if(result.success) location.reload();
         }
 
-        async function startCampaign() {
-            let response = await fetch('/start-campaign', {
+        async function startPageCampaign() {
+            let response = await fetch('/start-page-campaign', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' }
             });
