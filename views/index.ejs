@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>لوحة إدارة شبكة الحسابات الآلية</title>
+    <title>إدارة شبكة الحسابات الآلية (Bulk Import)</title>
     <style>
         body { font-family: Tahoma, sans-serif; background: #0f172a; color: #f8fafc; margin: 0; padding: 20px; }
         h1, h2 { text-align: center; color: #38bdf8; }
         .container { max-width: 1000px; margin: 0 auto; background: #1e293b; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
-        .form-box { background: #334155; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
-        input { padding: 10px; border-radius: 5px; border: 1px solid #475569; background: #1e293b; color: #fff; flex: 1; min-width: 250px; }
+        .form-box { background: #334155; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: flex; flex-direction: column; gap: 10px; }
+        textarea { padding: 10px; border-radius: 5px; border: 1px solid #475569; background: #1e293b; color: #fff; width: 100%; height: 120px; resize: vertical; }
         button { background: #0284c7; color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; transition: 0.2s; font-weight: bold; }
         button:hover { background: #0369a1; }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
@@ -20,25 +20,25 @@
 </head>
 <body>
     <div class="container">
-        <h1>إدارة شبكة الحسابات الآلية (Bot Farm Engine)</h1>
+        <h1>إدارة شبكة الحسابات الجماعية (Bot Farm Engine)</h1>
         
         <div class="target-box">
             الرابط المستهدف الحالي لزيادة المتابعين: <br>
             <a href="<%= targetUrl %>" target="_blank" style="color: #38bdf8; font-weight: bold;"><%= targetUrl %></a>
         </div>
 
-        <!-- إضافة حساب جديد مع الـ Cookie -->
+        <!-- صندوق الاستيراد الجماعي -->
         <div class="form-box">
-            <input type="text" id="username" placeholder="اسم حساب فيسبوك (أو معرفه)">
-            <input type="text" id="cookie" placeholder="الصق Cookie الخاصة بالحساب هنا">
-            <button onclick="addAccount()">إضافة الحساب للشبكة ➕</button>
+            <label style="color: #38bdf8; font-weight: bold;">الاستيراد الجماعي للحسابات (الصيغة: اسم_المستخدم:الكوكيز - كل حساب في سطر):</label>
+            <textarea id="bulkData" placeholder="user1:c_user=...;xs=...&#10;user2:c_user=...;xs=..."></textarea>
+            <button onclick="importBulkAccounts()">استيراد وحفظ الحسابات دفعة واحدة 📥</button>
         </div>
 
         <div style="text-align: center; margin-bottom: 20px;">
             <button onclick="startCampaign()" style="background: #10b981; font-size: 16px; padding: 12px 25px;">بدء حملة إرسال المتابعين للرابط 🚀</button>
         </div>
 
-        <h2>قائمة الحسابات المخزنة في الشبكة (<%= accounts.length %>)</h2>
+        <h2>الحسابات المخزنة في الشبكة حالياً (<%= accounts.length %>)</h2>
         <table>
             <thead>
                 <tr>
@@ -60,19 +60,17 @@
     </div>
 
     <script>
-        async function addAccount() {
-            const username = document.getElementById('username').value;
-            const cookie = document.getElementById('cookie').value;
-            
-            if(!username || !cookie) {
-                alert('الرجاء إدخال اسم المستخدم والـ Cookie معاً!');
+        async function importBulkAccounts() {
+            const bulkData = document.getElementById('bulkData').value;
+            if(!bulkData) {
+                alert('الرجاء لصق قائمة الحسابات أولاً!');
                 return;
             }
 
-            let response = await fetch('/add-account', {
+            let response = await fetch('/import-bulk', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, cookie })
+                body: JSON.stringify({ bulkData })
             });
             let result = await response.json();
             alert(result.message);
@@ -82,8 +80,7 @@
         async function startCampaign() {
             let response = await fetch('/start-campaign', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ amount: 100 })
+                headers: { 'Content-Type': 'application/json' }
             });
             let result = await response.json();
             alert(result.message);
