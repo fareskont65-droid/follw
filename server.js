@@ -13,11 +13,11 @@ const db = new sqlite3.Database(dbFile, (err) => {
     if (err) {
         console.error('خطأ في فتح قاعدة البيانات ❌', err.message);
     } else {
-        console.log('متصل بقاعدة البيانات المحلية بنجاح ✅');
+        console.log('متصل بقاعدة البيانات الفعالة ✅');
     }
 });
 
-// إنشاء جداول الحسابات (Accounts) والمهام (Tasks) إذا لم تكن موجودة
+// إنشاء جداول الحسابات والمهام
 db.serialize(() => {
     db.run(`CREATE TABLE IF NOT EXISTS accounts (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -34,12 +34,11 @@ db.serialize(() => {
     )`);
 });
 
-// الرابط المستهدف الأساسي المحفوظ في الذاكرة
 const TARGET_URL = "https://www.facebook.com/profile.php?id=61590146324460";
 
-// لوحة التحكم الرئيسية تعرض الحسابات المخزنة وحالة النظام
+// لوحة التحكم الرئيسية
 app.get('/', (req, res) => {
-    db.all(`SELECT * FROM accounts`, [], (err, accounts) => {
+    db.all(`SELECT id, username, status FROM accounts`, [], (err, accounts) => {
         db.all(`SELECT * FROM tasks`, [], (err2, tasks) => {
             res.render('index', { 
                 accounts: accounts || [], 
@@ -50,31 +49,51 @@ app.get('/', (req, res) => {
     });
 });
 
-// مسار لإضافة حساب فايسبوك جديد (مع الـ Cookie الخاصة به)
-app.post('/add-account', (req, res) => {
-    const { username, cookie } = req.body;
-    if (!username || !cookie) {
-        return res.status(400).json({ success: false, message: "اسم المستخدم وملف تعريف الارتباط (Cookie) مطلوبان!" });
+// مسار الاستيراد الجماعي للحسابات (Bulk Import)
+app.post('/import-bulk', (req, res) => {
+    const { bulkData } = req.body; // نستقبل النص الذي يحتوي على الحسابات
+    if (!bulkData) {
+        return res.status(400).json({ success: false, message: "الرجاء إدخال بيانات الحسابات!" });
     }
 
-    db.run(`INSERT INTO accounts (username, cookie) VALUES (?, ?)`, [username, cookie], function(err) {
-        if (err) {
-            return res.status(500).json({ success: false, message: "فشل حفظ الحساب في قاعدة البيانات!" });
-        }
-        res.json({ success: true, message: `تمت إضافة الحساب ${username} بنجاح وقبوله في النظام!` });
+    // تقسيم النص إلى أسطر (كل سطر يمثل حساباً)
+    const lines = bulkData.split('\n');
+    let importedCount = 0;
+
+    db.serialize(() => {
+        const stmt = db.prepare(`INSERT INTO accounts (username, cookie) VALUES (?, ?)`);
+        
+        lines.forEach(line => {
+            line = line.trim();
+            if (!line) return;
+
+            // نفترض أن الصيغة تكون هكذا: username|cookie أو username:cookie
+            const parts = line.split(/[:|]/);
+            if (parts.length >= 2) {
+                const username = parts[0].trim();
+                const cookie = parts.slice(1).join(':').trim(); // دمج باقي الأجزاء لتكون الكوكيز
+                
+                stmt.run(username, cookie);
+                importedCount++;
+            }
+        });
+
+        stmt.finalize((err) => {
+            if (err) {
+                return res.status(500).json({ success: false, message: "حدث خطأ أثناء الحفظ الجماعي في قاعدة البيانات!" });
+            }
+            res.json({ success: true, message: `تم استيراد وحفظ ${importedCount} حساباً بنجاح في الشبكة! 🚀` });
+        });
     });
 });
 
-// مسار لإرسال حملة متابعين جديدة للرابط المستهدف باستخدام الحسابات المخزنة
+// مسار بدء حملة المتابعين للرابط المستهدف
 app.post('/start-campaign', (req, res) => {
-    const { amount } = req.body;
-    
-    // إضافة المهمة إلى جدول المهام
-    db.run(`INSERT INTO tasks (targetUrl, amount) VALUES (?, ?)`, [TARGET_URL, amount || 100], function(err) {
+    db.run(`INSERT INTO tasks (targetUrl, amount) VALUES (?, ?)`, [TARGET_URL, 100], function(err) {
         if (err) {
             return res.status(500).json({ success: false, message: "فشل بدء الحملة!" });
         }
-        res.json({ success: true, message: "تمت جدولة حملة المتابعين بنجاح لتنفيذها عبر الحسابات المسجلة!" });
+        res.json({ success: true, message: "تمت جدولة الحملة بنجاح لتنفيذها عبر شبكة الحسابات المستوردة!" });
     });
 });
 
